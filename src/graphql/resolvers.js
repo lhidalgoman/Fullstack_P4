@@ -80,7 +80,13 @@ module.exports = {
          * @returns 
          */
         async editDayTask(_, {taskId, TaskDiaUpdate: {dia}}){
-            return Tasks.updDayTask(taskId, dia);
+            let count = Tasks.updDayTask(taskId, dia);
+            if (count > 0){
+                pubsub.publish("DAY_UPDATED", {
+                   day: {dia} 
+                })
+            }
+            return count;
         },
 
         /**
@@ -93,5 +99,13 @@ module.exports = {
             return Tasks.updateFile(taskId, filepath, filename, uploadDate);
         }
 
-    }
+    },
+    Subscription: {
+        day: {
+          subscribe(parent, args, { pubsub }) {
+            return pubsub.asyncIterator("DAY_UPDATED");
+          },
+        },
+      }
+
 }

@@ -13,7 +13,6 @@ const resolvers = require('./src/graphql/resolvers');
 // Importamos http y Socket IO
 const http = require('http');
 const { Server } = require('socket.io');
-const { writeFile } = require('fs');
 const fs = require('fs');
 
 //Importamos pubsub (producto 4)
@@ -125,8 +124,7 @@ async function startServer() {
     
     //Aviso que se viene un archivo!!    
 
-    io.on("connection", (socket) => {
-      socket.on("upload", (file, callback) => {
+    socket.on("upload", (file, callback) => {
       //  console.log(file.bytes); // <Buffer 25 50 44 ...>
         let fileFullPath = "";
 
@@ -142,8 +140,29 @@ async function startServer() {
           callback({ message: err ? err : "success" , "filepath" : file.folder + "/", "filename" : file.filename});
         });
       });
-});
 
+    //PubSub por socket.io
+
+    socket.on('DAY_UPDATED', function (msg) { 
+      if (msg.action === "subscribe") {
+        console.log("Subscribe on " + msg.channel);
+        sub.subscribe(msg.channel);    
+      }
+      if (msg.action === "unsubscribe") {
+        console.log("Unsubscribe from" + msg.channel);      
+        sub.unsubscribe(msg.channel); 
+      }
+    });
+
+    socket.on('disconnect', function () { 
+      sub.quit();
+    });
+
+    sub.on('DAY_UPDATED', function (channel) {
+      socket.send({
+        day : pubsub.message
+      });
+    }); 
   });
 
   const server = new ApolloServer({
@@ -165,10 +184,10 @@ async function startServer() {
   server.applyMiddleware({app});
 
   // Unimos apollo server a la aplicacion de express (añadido para el producto 4)
-server.applyMiddleware({ app });
+// server.applyMiddleware({ app });
 
 // Habilitar las suscripciones a través de WebSockets (añadido para el producto 4)
-server.installSubscriptionHandlers(httpServer);
+  //server.installSubscriptionHandlers(httpServer);
   
   // Definimos el pueto predeterminado y lo que se ejecutara cuando se inicie el servidor.
   httpServer.listen(3000, function() {
