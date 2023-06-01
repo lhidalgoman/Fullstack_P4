@@ -1,9 +1,9 @@
+//Para las subscripciones seguimos instrucciones de  seguimos instruccions de https://www.apollographql.com/docs/apollo-server/data/subscriptions/
+
 //Importamos mongoose
 const mongoose = require('mongoose');
 //Importamos express
 const express = require('express');
-//Importamos subscriptions-transport-ws (producto 4)
-const { SubscriptionClient } = require('subscriptions-transport-ws');
 
 // Importamos apollo server (Importamos los typeDefs y los resolvers)
 const { ApolloServer } = require('apollo-server-express');
@@ -17,6 +17,14 @@ const fs = require('fs');
 
 //Importamos pubsub (producto 4)
 const pubsub = require('./pubsub');
+
+//Importamos todo lo necesario para hacer la subscripcion por websockets
+//la nueva versión es más compleja y en la UOC no te enseñan nada
+const { createServer } = require('http');
+const { makeExecutableSchema } = require('@graphql-tools/schema');
+const { WebSocketServer } = require('ws');
+const { useServer } = require('graphql-ws/lib/use/ws');
+
 
 // Cadena de conexión
 const uri = 'mongodb+srv://admin:U0c2023@cluster0.amvowh2.mongodb.net/weektasks';
@@ -48,6 +56,8 @@ async function startServer() {
 
   // Configuracion Socket IO
   const httpServer = http.createServer(app);
+
+
   //configuramos el io para un max upload de 100MB de Buffer.
   const io = new Server(httpServer, {maxHttpBufferSize: 1e8 }); //100MB
 
@@ -140,34 +150,28 @@ async function startServer() {
           callback({ message: err ? err : "success" , "filepath" : file.folder + "/", "filename" : file.filename});
         });
       });
-
-    //PubSub por socket.io
-
-    socket.on('DAY_UPDATED', function (msg) { 
-      if (msg.action === "subscribe") {
-        console.log("Subscribe on " + msg.channel);
-        sub.subscribe(msg.channel);    
-      }
-      if (msg.action === "unsubscribe") {
-        console.log("Unsubscribe from" + msg.channel);      
-        sub.unsubscribe(msg.channel); 
-      }
-    });
-
-    socket.on('disconnect', function () { 
-      sub.quit();
-    });
-
-    sub.on('DAY_UPDATED', function (channel) {
-      socket.send({
-        day : pubsub.message
-      });
-    }); 
   });
 
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+
   const server = new ApolloServer({
-    typeDefs, 
-    resolvers,
+    schema,
+ /*   plugins: [
+      // Proper shutdown for the HTTP server.
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+  
+      // Proper shutdown for the WebSocket server.
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
+    ],*/
     context: ({ req }) => {
       // Incluimos la instancia de PubSub en el contexto
       const context = { req, pubsub }; //añadimos pubsub producto 4 (punto 6)
@@ -175,6 +179,20 @@ async function startServer() {
       return context;
     }
   });
+
+
+  // Creating the WebSocket server
+  const wsServer = new WebSocketServer({
+    // This is the `httpServer` we created in a previous step.
+    server: httpServer,
+    // Pass a different path here if app.use
+    // serves expressMiddleware at a different path
+    path: '/graphql',
+  });
+  
+  // Hand in the schema we just created and have the
+  // WebSocketServer start listening.
+  const serverCleanup = useServer({ schema }, wsServer);
 
   // Se debe declarar esta funcion asíncrona para evitar que el middelware
   // que une apollo con express se aplique antes de que se inicie el servicio y cause errores
