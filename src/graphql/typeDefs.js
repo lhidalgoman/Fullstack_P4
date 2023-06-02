@@ -88,5 +88,9 @@ type Mutation {
     editDayTask(taskId: String!, TaskDiaUpdate: TaskDiaUpdate): Boolean
     uploadFileTask(taskId: String!, TaskFileUpdate: TaskFileUpdate): Boolean
 }
+
+type Subscription {
+    day: String!
+}
 `
 
