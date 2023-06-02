@@ -5,8 +5,17 @@
 // Inicializamos el constructor para poder enviar señales
 // del cliente al servidor y viceversa.
 const socket = io();
-const SERVER_URL = "https://xkh61w-3000.csb.app/";
+
+
+
+const SERVER_URL = "http://localhost:3000/";
 const GRAPHQL_URL = SERVER_URL + "graphql";
+
+const GRAPHQL_ENDPOINT = "ws://localhost:3000/graphql";
+
+//i-PROD-4 conexión a websockets
+const ws =  new WebSocket("ws://localhost:3000/graphql");
+//F-PROD-4 
 
 // Paleta de colores
 const DEFAULT_COLOR = "#edede9"; 
@@ -51,7 +60,16 @@ const WHT_COLOR = "#FAFAFA";
 
     });
   }
-  
+
+ let subClient = new SubscriptionClient(GRAPHQL_ENDPOINT, {
+  reconnect: true,
+  lazy: true, // only connect when there is a query
+  connectionCallback: (error) => {
+    error && console.error(error);
+  },
+});
+
+
   function loadMain(){
       loadNavBar("TARJETAS SEMANALES");
       loadDivCardWeeks();

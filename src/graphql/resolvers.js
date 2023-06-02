@@ -81,11 +81,11 @@ module.exports = {
          */
         async editDayTask(_, {taskId, TaskDiaUpdate: {dia}}){
             let count = Tasks.updDayTask(taskId, dia);
-            if (count > 0){
+          //  if (count > 0){
                 pubsub.publish("DAY_UPDATED", {                 
-                   day: dia
+                   day: {dia, taskId}
                 })
-            }
+          //  }
             return count;
         },
 

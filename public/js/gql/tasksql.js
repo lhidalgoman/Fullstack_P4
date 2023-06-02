@@ -132,6 +132,38 @@ function editDiaTask(taskId,  dia, plan){
   }
 
 /**
+ * Subscripción al cambio de dia
+ */
+
+function subscribeTaskDay(){
+  const query = JSON.stringify({
+    query: `
+    subscription Subscription {
+      day {
+        dia
+        taskId
+      }
+    }`
+  });
+  fetch(GRAPHQL_URL, {
+      method: 'POST',
+      headers: {
+          "Content-Type": "application/json"
+      },
+  
+      body: query})
+    .then((res) => res.json())
+    .then((res) => {
+      console.log("Suscrito?");
+      return;
+    })
+    .catch((error) => {
+      console.error('Error en la subscripción: ', error);
+      return;
+    });
+}
+
+/**
   *  Función que te actualiza el archivo cargado
   */
 function updateFileTask(taskId, filepath, filename, uploadDate){
