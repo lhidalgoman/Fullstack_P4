@@ -1,7 +1,7 @@
 const Cards = require('../controllers/cardscontroller.js');
 const Tasks = require('../controllers/taskscontroller.js');
 const io = require('socket.io');
-
+const pubsub = require('../../pubsub');
 
 module.exports = {
     Query: {
@@ -82,8 +82,8 @@ module.exports = {
         async editDayTask(_, {taskId, TaskDiaUpdate: {dia}}){
             let count = Tasks.updDayTask(taskId, dia);
             if (count > 0){
-                pubsub.publish("DAY_UPDATED", {
-                   day: {dia} 
+                pubsub.publish("DAY_UPDATED", {                 
+                   day: dia
                 })
             }
             return count;
@@ -102,7 +102,7 @@ module.exports = {
     },
     Subscription: {
         day: {
-          subscribe(parent, args, { pubsub }) {
+          subscribe(parent, args) {
             return pubsub.asyncIterator("DAY_UPDATED");
           },
         },
