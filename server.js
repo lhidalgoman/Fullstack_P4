@@ -185,7 +185,7 @@ async function startServer() {
       return context;
     }
   });
-
+  
   //  Creating the WebSocket server
   const wsServer = new WebSocketServer({
     // This is the `httpServer` we created in a previous step.
@@ -198,6 +198,7 @@ async function startServer() {
   // Hand in the schema we just created and have the
   // WebSocketServer start listening.
   const serverCleanup = useServer({ schema }, wsServer);
+  
 //F-PROD-4
 
   // Se debe declarar esta funcion asíncrona para evitar que el middelware
