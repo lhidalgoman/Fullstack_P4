@@ -138,6 +138,8 @@ async function startServer() {
     
     //Aviso que se viene un archivo!!    
 
+
+
     io.on("connection", (socket) => {
       socket.on("upload", (file, callback) => {
       //  console.log(file.bytes); // <Buffer 25 50 44 ...>
@@ -155,9 +157,9 @@ async function startServer() {
           callback({ message: err ? err : "success" , "filepath" : file.folder + "/", "filename" : file.filename});
         });
       });
+});
+
   });
-
-
 
 //I-PROD-4
   const schema = makeExecutableSchema({ typeDefs, resolvers });
