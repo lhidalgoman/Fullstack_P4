@@ -26,6 +26,11 @@ type Cards{
     vacaciones: Boolean
 }
 
+type dayTask{
+    taskId: String!,
+    dia: String
+}
+
 input CardsInput {
     semana: Int!
     nombre: String!
@@ -87,6 +92,10 @@ type Mutation {
     editTask(taskId: String!, TaskUpdate: TaskUpdate): Boolean
     editDayTask(taskId: String!, TaskDiaUpdate: TaskDiaUpdate): Boolean
     uploadFileTask(taskId: String!, TaskFileUpdate: TaskFileUpdate): Boolean
+}
+
+type Subscription {
+    day: dayTask!
 }
 `
 

@@ -1,9 +1,12 @@
+
+//Para las subscripciones seguimos instrucciones de  
+//seguimos instruccions de https://www.apollographql.com/docs/apollo-server/data/subscriptions/
+// Las modificaciones comienzan en I-PROD-4
+
 //Importamos mongoose
 const mongoose = require('mongoose');
 //Importamos express
 const express = require('express');
-//Importamos subscriptions-transport-ws (producto 4)
-const { SubscriptionClient } = require('subscriptions-transport-ws');
 
 // Importamos apollo server (Importamos los typeDefs y los resolvers)
 const { ApolloServer } = require('apollo-server-express');
@@ -13,11 +16,19 @@ const resolvers = require('./src/graphql/resolvers');
 // Importamos http y Socket IO
 const http = require('http');
 const { Server } = require('socket.io');
-const { writeFile } = require('fs');
 const fs = require('fs');
 
+//I-PROD-4
 //Importamos pubsub (producto 4)
 const pubsub = require('./pubsub');
+
+//Importamos todo lo necesario para hacer la subscripcion por websockets
+
+const { makeExecutableSchema } = require('@graphql-tools/schema');
+const { WebSocketServer } = require('ws');
+const { useServer } = require('graphql-ws/lib/use/ws');
+const { ApolloServerPluginDrainHttpServer } = require('@apollo/server/plugin/drainHttpServer');
+//F-PROD-4
 
 // Cadena de conexión
 const uri = 'mongodb+srv://admin:U0c2023@cluster0.amvowh2.mongodb.net/weektasks';
@@ -49,6 +60,8 @@ async function startServer() {
 
   // Configuracion Socket IO
   const httpServer = http.createServer(app);
+
+
   //configuramos el io para un max upload de 100MB de Buffer.
   const io = new Server(httpServer, {maxHttpBufferSize: 1e8 }); //100MB
 
@@ -125,8 +138,7 @@ async function startServer() {
     
     //Aviso que se viene un archivo!!    
 
-    io.on("connection", (socket) => {
-      socket.on("upload", (file, callback) => {
+    socket.on("upload", (file, callback) => {
       //  console.log(file.bytes); // <Buffer 25 50 44 ...>
         let fileFullPath = "";
 
@@ -142,13 +154,30 @@ async function startServer() {
           callback({ message: err ? err : "success" , "filepath" : file.folder + "/", "filename" : file.filename});
         });
       });
-});
-
   });
 
+
+
+//I-PROD-4
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
+
   const server = new ApolloServer({
-    typeDefs, 
-    resolvers,
+    schema,
+   plugins: [
+      // Configuración para cerrar los websockets bien y que no quede nada colgado
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+  
+      // Proper shutdown for the WebSocket server.
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
+    ],
     context: ({ req }) => {
       // Incluimos la instancia de PubSub en el contexto
       const context = { req, pubsub }; //añadimos pubsub producto 4 (punto 6)
@@ -156,6 +185,21 @@ async function startServer() {
       return context;
     }
   });
+  
+  //  Creating the WebSocket server
+  const wsServer = new WebSocketServer({
+    // This is the `httpServer` we created in a previous step.
+    server: httpServer,
+    // Pass a different path here if app.use
+    // serves expressMiddleware at a different path
+    path: '/graphql',
+  });
+  
+  // Hand in the schema we just created and have the
+  // WebSocketServer start listening.
+  const serverCleanup = useServer({ schema }, wsServer);
+  
+//F-PROD-4
 
   // Se debe declarar esta funcion asíncrona para evitar que el middelware
   // que une apollo con express se aplique antes de que se inicie el servicio y cause errores
@@ -164,11 +208,7 @@ async function startServer() {
   // Unimos apollo server a la aplicacion de express
   server.applyMiddleware({app});
 
-  // Unimos apollo server a la aplicacion de express (añadido para el producto 4)
-server.applyMiddleware({ app });
 
-// Habilitar las suscripciones a través de WebSockets (añadido para el producto 4)
-server.installSubscriptionHandlers(httpServer);
   
   // Definimos el pueto predeterminado y lo que se ejecutara cuando se inicie el servidor.
   httpServer.listen(3000, function() {

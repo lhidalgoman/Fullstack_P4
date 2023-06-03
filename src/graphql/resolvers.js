@@ -1,7 +1,7 @@
 const Cards = require('../controllers/cardscontroller.js');
 const Tasks = require('../controllers/taskscontroller.js');
 const io = require('socket.io');
-
+const pubsub = require('../../pubsub');
 
 module.exports = {
     Query: {
@@ -80,7 +80,13 @@ module.exports = {
          * @returns 
          */
         async editDayTask(_, {taskId, TaskDiaUpdate: {dia}}){
-            return Tasks.updDayTask(taskId, dia);
+            let count = Tasks.updDayTask(taskId, dia);
+            // i-PROD-4  genera evento DAY_UPDATED y publica los datos
+             pubsub.publish("DAY_UPDATED", {                 
+                   day: {dia, taskId}
+             })
+            // f-PROD-4
+            return count;
         },
 
         /**
@@ -93,5 +99,14 @@ module.exports = {
             return Tasks.updateFile(taskId, filepath, filename, uploadDate);
         }
 
-    }
+    },
+    //PROD-4  Subscripción al day
+    Subscription: {
+        day: {
+          subscribe(parent, args) {
+            return pubsub.asyncIterator("DAY_UPDATED");
+          },
+        },
+      }
+
 }
