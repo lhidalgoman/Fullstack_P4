@@ -11,7 +11,7 @@ const SERVER_LOCATION = "glp1xg-3000.csb.app"
 const SERVER_URL = `https://${SERVER_LOCATION}/`;
 const GRAPHQL_URL = SERVER_URL + "graphql";
 
-const GRAPHQL_ENDPOINT = `ws://${SERVER_LOCATION}/graphql`;
+const GRAPHQL_ENDPOINT = `wss://${SERVER_LOCATION}/graphql`;
 
 
 //i-PROD-4 conexión a websockets
