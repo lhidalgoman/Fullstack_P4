@@ -7,14 +7,36 @@
 const socket = io();
 
 
-
-const SERVER_URL = "http://localhost:3000/";
+const SERVER_LOCATION = "localhost:3000"
+const SERVER_URL = `http://${SERVER_LOCATION}/`;
 const GRAPHQL_URL = SERVER_URL + "graphql";
 
-const GRAPHQL_ENDPOINT = "ws://localhost:3000/graphql";
+const GRAPHQL_ENDPOINT = `ws://${SERVER_LOCATION}/graphql`;
+
 
 //i-PROD-4 conexión a websockets
-const ws =  new WebSocket("ws://localhost:3000/graphql");
+//Creamos el cliente graphql-ws
+const client = graphqlWs.createClient({
+  url: GRAPHQL_ENDPOINT,
+  lazy: false,
+});
+
+//realizamos la subscripción nada más iniciar 
+client.subscribe({
+  query: `subscription Day {
+    day {
+        taskId
+        dia
+    }
+}`
+},{
+  next: (res) => {
+    //console.log(res.data);
+    //Si alguien actualiza una tarea saldrá un AVISO para que actualice la página o se vaya a desayunar sin son entre las 9 o las 10 de la mañana.
+    alert('Se ha actualizado la tarea ' + res.data.day.taskId + " al dia " + res.data.day.dia ); 
+  },
+  error: (error) => console.error(error),
+}); 
 //F-PROD-4 
 
 // Paleta de colores
@@ -61,13 +83,9 @@ const WHT_COLOR = "#FAFAFA";
     });
   }
 
- let subClient = new SubscriptionClient(GRAPHQL_ENDPOINT, {
-  reconnect: true,
-  lazy: true, // only connect when there is a query
-  connectionCallback: (error) => {
-    error && console.error(error);
-  },
-});
+ 
+
+
 
 
   function loadMain(){

@@ -81,11 +81,11 @@ module.exports = {
          */
         async editDayTask(_, {taskId, TaskDiaUpdate: {dia}}){
             let count = Tasks.updDayTask(taskId, dia);
-          //  if (count > 0){
-                pubsub.publish("DAY_UPDATED", {                 
+            // i-PROD-4  genera evento DAY_UPDATED y publica los datos
+             pubsub.publish("DAY_UPDATED", {                 
                    day: {dia, taskId}
-                })
-          //  }
+             })
+            // f-PROD-4
             return count;
         },
 
@@ -100,6 +100,7 @@ module.exports = {
         }
 
     },
+    //PROD-4  Subscripción al day
     Subscription: {
         day: {
           subscribe(parent, args) {
