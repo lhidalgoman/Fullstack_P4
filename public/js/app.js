@@ -7,8 +7,8 @@
 const socket = io();
 
 
-const SERVER_LOCATION = "https://glp1xg-3000.csb.app/"
-const SERVER_URL = `http://${SERVER_LOCATION}/`;
+const SERVER_LOCATION = "glp1xg-3000.csb.app"
+const SERVER_URL = `https://${SERVER_LOCATION}/`;
 const GRAPHQL_URL = SERVER_URL + "graphql";
 
 const GRAPHQL_ENDPOINT = `ws://${SERVER_LOCATION}/graphql`;
