@@ -137,8 +137,11 @@ async function startServer() {
 
     
     //Aviso que se viene un archivo!!    
+    //Aviso que se viene un archivo!!    
 
-    socket.on("upload", (file, callback) => {
+
+    io.on("connection", (socket) => {
+      socket.on("upload", (file, callback) => {
       //  console.log(file.bytes); // <Buffer 25 50 44 ...>
         let fileFullPath = "";
 
@@ -154,8 +157,9 @@ async function startServer() {
           callback({ message: err ? err : "success" , "filepath" : file.folder + "/", "filename" : file.filename});
         });
       });
-  });
+});
 
+  });
 
 
 //I-PROD-4
